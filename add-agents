@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# add-agents — copy Spec-Kit agent definitions into a project.
+# Usage: add-agents [-d DIR] [-f] <sdd|bug-fixer|assessor>...
+
+set -euo pipefail
+
+# Absolute directory where the agents' markdowns live.
+AGENTS_SRC_DIR="$HOME/.local/share/speckit-agents"
+
+# Markdown files copied by each option.
+SDD_AGENTS=(coordinator.md planner.md developer.md verifier.md)
+BUG_FIXER_AGENTS=(bug-fixer.md)
+ASSESSOR_AGENTS=(idea-assessor.md)
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-d DIR] [-f] <agent>...
+
+Agents:
+  sdd         ${SDD_AGENTS[*]}
+  bug-fixer   ${BUG_FIXER_AGENTS[*]}
+  assessor    ${ASSESSOR_AGENTS[*]}
+
+Options:
+  -d DIR   project directory (default: current directory)
+  -f       overwrite agents that already exist
+  -h       show this help
+EOF
+}
+
+die() { echo "Error: $*" >&2; exit 1; }
+
+project_dir="$PWD"
+force=0
+while getopts ":d:fh" opt; do
+  case "$opt" in
+    d) project_dir="$OPTARG" ;;
+    f) force=1 ;;
+    h) usage; exit 0 ;;
+    :) die "option -$OPTARG needs a value" ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+[ $# -gt 0 ] || { usage >&2; exit 2; }
+[ -d "$project_dir" ] || die "'$project_dir' is not a directory"
+[ -d "$AGENTS_SRC_DIR" ] || die "agents source directory not found: $AGENTS_SRC_DIR"
+project_dir="$(cd "$project_dir" && pwd)"
+
+# Map the requested options to markdown files (validated before anything is written).
+files=()
+for agent in "$@"; do
+  case "$agent" in
+    sdd)       files+=("${SDD_AGENTS[@]}") ;;
+    bug-fixer) files+=("${BUG_FIXER_AGENTS[@]}") ;;
+    assessor)  files+=("${ASSESSOR_AGENTS[@]}") ;;
+    *)         die "unknown agent '$agent' (valid: sdd, bug-fixer, assessor)" ;;
+  esac
+done
+for f in "${files[@]}"; do
+  [ -f "$AGENTS_SRC_DIR/$f" ] || die "missing source file: $AGENTS_SRC_DIR/$f"
+done
+
+# Pick the destination: .claude first, then .agents, otherwise offer to create .claude.
+if [ -d "$project_dir/.claude" ]; then
+  dest="$project_dir/.claude/agents"
+elif [ -d "$project_dir/.agents" ]; then
+  dest="$project_dir/.agents/agents"
+else
+  echo "Warning: no .claude or .agents directory in $project_dir" >&2
+  read -r -p "Create .claude and put the agents there? [y/N] " answer || answer=""
+  case "$answer" in
+    y|Y|yes|YES|Yes) dest="$project_dir/.claude/agents" ;;
+    *) echo "Aborted. Nothing was copied."; exit 1 ;;
+  esac
+fi
+mkdir -p "$dest"
+
+copied=()
+skipped=()
+for f in "${files[@]}"; do
+  case " ${copied[*]-} ${skipped[*]-} " in *" $f "*) continue ;; esac  # option given twice
+  if [ -e "$dest/$f" ] && [ "$force" -eq 0 ]; then
+    skipped+=("$f")
+  else
+    cp "$AGENTS_SRC_DIR/$f" "$dest/$f"
+    copied+=("$f")
+  fi
+done
+
+if [ ${#skipped[@]} -gt 0 ]; then
+  echo "Skipped (already exist, use -f to overwrite): ${skipped[*]}"
+fi
+if [ ${#copied[@]} -gt 0 ]; then
+  echo "Success: ${#copied[@]} agent(s) added to $dest"
+  printf '  %s\n' "${copied[@]}"
+else
+  echo "Nothing to add: all requested agents are already in $dest"
+fi
