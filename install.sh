@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install.sh — install add-agents and the Spec-Kit agent markdowns, then check Spec-Kit.
-# Run it from the folder that holds add-agents and the six agent .md files.
+# Run it from the folder that holds add-agents and the agents/ folder with the six agent .md files.
 
 set -uo pipefail
 
@@ -19,19 +19,21 @@ die()  { echo "Error: $*" >&2; exit 1; }
 warn() { echo "Warning: $*" >&2; }
 
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENTS_SRC="$SRC_DIR/agents"
 
 # --- 1. Validate everything before touching the system ---------------------
 [ -n "${HOME:-}" ] && [ -d "$HOME" ] || die "HOME is not set or is not a directory"
 
 missing=()
-for f in "$SCRIPT_NAME" "${AGENT_FILES[@]}"; do
-  [ -f "$SRC_DIR/$f" ] || missing+=("$f")
+[ -f "$SRC_DIR/$SCRIPT_NAME" ] || missing+=("$SCRIPT_NAME")
+for f in "${AGENT_FILES[@]}"; do
+  [ -f "$AGENTS_SRC/$f" ] || missing+=("agents/$f")
 done
 [ ${#missing[@]} -eq 0 ] || die "missing in $SRC_DIR: ${missing[*]}"
 
 for f in "${AGENT_FILES[@]}"; do
-  [ -s "$SRC_DIR/$f" ] || die "$f is empty"
-  [ "$(head -n 1 "$SRC_DIR/$f")" = "---" ] || die "$f has no frontmatter (is it an agent file?)"
+  [ -s "$AGENTS_SRC/$f" ] || die "$f is empty"
+  [ "$(head -n 1 "$AGENTS_SRC/$f")" = "---" ] || die "$f has no frontmatter (is it an agent file?)"
 done
 bash -n "$SRC_DIR/$SCRIPT_NAME" || die "$SCRIPT_NAME has syntax errors"
 
@@ -47,7 +49,7 @@ mkdir -p "$BIN_DIR" "$AGENTS_DEST_DIR" || die "cannot create $BIN_DIR or $AGENTS
 cp "$SRC_DIR/$SCRIPT_NAME" "$BIN_DIR/$SCRIPT_NAME" || die "could not copy $SCRIPT_NAME"
 chmod +x "$BIN_DIR/$SCRIPT_NAME" || die "could not make $SCRIPT_NAME executable"
 for f in "${AGENT_FILES[@]}"; do
-  cp "$SRC_DIR/$f" "$AGENTS_DEST_DIR/$f" || die "could not copy $f"
+  cp "$AGENTS_SRC/$f" "$AGENTS_DEST_DIR/$f" || die "could not copy $f"
 done
 
 echo "Installed $SCRIPT_NAME to $BIN_DIR"
