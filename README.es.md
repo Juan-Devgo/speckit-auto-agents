@@ -21,7 +21,8 @@ Un pequeño conjunto de definiciones de subagentes de [Claude Code](https://clau
     ├── developer.md        # implementa tasks.md
     ├── verifier.md         # analyze + converge, nunca corrige
     ├── bug-fixer.md        # assess → fix → test de un bug
-    └── idea-assessor.md    # intake → research → define → shape → decide
+    ├── idea-assessor.md    # intake → research → define → shape → decide
+    └── AGENTS.md           # reglas comunes: capas de artefactos, formato de respuesta, skills faltantes
 ```
 
 ## Los agentes
@@ -36,6 +37,12 @@ Un pequeño conjunto de definiciones de subagentes de [Claude Code](https://clau
 | `idea-assessor` | Una etapa por llamada, el estado se guarda en `.specify/assessments/<slug>/`. | `speckit-assess-intake`, `-research`, `-define`, `-shape`, `-decide` |
 
 Cada agente tiene permisos acotados (herramientas, rutas escribibles) y responde con un bloque `STATUS` fijo, así el coordinador lee poco y su contexto se mantiene pequeño.
+
+Las reglas comunes viven en `AGENTS.md` (instalado en la raíz del proyecto) en lugar de repetirse en cada agente:
+
+- **Capas de artefactos.** constitution → spec → plan → tasks. Cada archivo contiene solo lo nuevo de su nivel y referencia al nivel superior por ID (`FR-003`, `constitution §Testing`) en vez de repetirlo. `tasks.md` es solo el checklist.
+- **Respuestas compactas.** Los agentes responden solo con el bloque `STATUS`: rutas e IDs, sin prosa.
+- **Skills faltantes.** Los agentes nunca improvisan una skill que no tienen; devuelven `SKILL_REQUEST`.
 
 ## Flujos de trabajo
 
@@ -130,7 +137,8 @@ Luego inicia Claude Code en el proyecto y habla con el `coordinator` (p. ej. `cl
    - si no, existe `<project>/.agents/` → `.agents/agents/`
    - si no, avisa y pregunta si crear `.claude/`. Cualquier respuesta distinta de sí aborta sin copiar nada.
 5. **Copia.** Los archivos existentes se omiten salvo con `-f`. Los duplicados (un agente pedido dos veces) se copian una sola vez.
-6. **Reporte.** Lista los archivos omitidos, los copiados y el destino.
+6. **Reglas comunes.** Crea `<proyecto>/AGENTS.md`, o añade las reglas a uno existente entre los marcadores `<!-- speckit-agents:start/end -->`. Con `-f` solo se actualiza ese bloque; el resto del archivo se conserva.
+7. **Reporte.** Lista los archivos omitidos, los copiados y el destino.
 
 ## Personalización
 

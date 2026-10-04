@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install.sh — install add-agents and the Spec-Kit agent markdowns, then check Spec-Kit.
-# Run it from the folder that holds add-agents and the agents/ folder with the six agent .md files.
+# Run it from the folder that holds add-agents and the agents/ folder (six agent .md files + AGENTS.md).
 
 set -uo pipefail
 
@@ -10,6 +10,7 @@ AGENTS_DEST_DIR="$HOME/.local/share/speckit-agents"
 
 SCRIPT_NAME="add-agents"
 AGENT_FILES=(coordinator.md planner.md developer.md verifier.md bug-fixer.md idea-assessor.md)
+SHARED_FILE="AGENTS.md"   # shared rules, no frontmatter
 
 SPECKIT_CMD="specify"
 SPECKIT_INSTALL=(uv tool install specify-cli)
@@ -26,6 +27,7 @@ AGENTS_SRC="$SRC_DIR/agents"
 
 missing=()
 [ -f "$SRC_DIR/$SCRIPT_NAME" ] || missing+=("$SCRIPT_NAME")
+[ -f "$AGENTS_SRC/$SHARED_FILE" ] || missing+=("agents/$SHARED_FILE")
 for f in "${AGENT_FILES[@]}"; do
   [ -f "$AGENTS_SRC/$f" ] || missing+=("agents/$f")
 done
@@ -35,6 +37,7 @@ for f in "${AGENT_FILES[@]}"; do
   [ -s "$AGENTS_SRC/$f" ] || die "$f is empty"
   [ "$(head -n 1 "$AGENTS_SRC/$f")" = "---" ] || die "$f has no frontmatter (is it an agent file?)"
 done
+[ -s "$AGENTS_SRC/$SHARED_FILE" ] || die "$SHARED_FILE is empty"
 bash -n "$SRC_DIR/$SCRIPT_NAME" || die "$SCRIPT_NAME has syntax errors"
 
 configured="$(sed -n 's/^AGENTS_SRC_DIR="\(.*\)"$/\1/p' "$SRC_DIR/$SCRIPT_NAME" | head -n 1)"
@@ -48,12 +51,12 @@ mkdir -p "$BIN_DIR" "$AGENTS_DEST_DIR" || die "cannot create $BIN_DIR or $AGENTS
 
 cp "$SRC_DIR/$SCRIPT_NAME" "$BIN_DIR/$SCRIPT_NAME" || die "could not copy $SCRIPT_NAME"
 chmod +x "$BIN_DIR/$SCRIPT_NAME" || die "could not make $SCRIPT_NAME executable"
-for f in "${AGENT_FILES[@]}"; do
+for f in "${AGENT_FILES[@]}" "$SHARED_FILE"; do
   cp "$AGENTS_SRC/$f" "$AGENTS_DEST_DIR/$f" || die "could not copy $f"
 done
 
 echo "Installed $SCRIPT_NAME to $BIN_DIR"
-echo "Installed ${#AGENT_FILES[@]} agent files to $AGENTS_DEST_DIR"
+echo "Installed ${#AGENT_FILES[@]} agent files and $SHARED_FILE to $AGENTS_DEST_DIR"
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
