@@ -1,6 +1,6 @@
 <div align="right">
-  <a href="README.es.md">🇪🇸 Español</a> | 
-  <a href="README.md">🇬🇧 English</a>
+  <a href="README.md">🇪🇸 Español</a> |
+  <a href="README.en.md">🇬🇧 English</a>
 </div>
 
 # speckit-auto-agents
