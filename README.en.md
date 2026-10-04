@@ -1,3 +1,8 @@
+<div align="right">
+  <a href="README.md">🇪🇸 Español</a> |
+  <a href="README.en.md">🇬🇧 English</a>
+</div>
+
 # speckit-auto-agents
 
 A small set of [Claude Code](https://claude.com/claude-code) subagent definitions that run [Spec-Kit](https://github.com/github/spec-kit) skills in an automated loop, following **Spec-Driven Development (SDD)**. A CLI script, `add-agents`, copies the agents you need into any project.
