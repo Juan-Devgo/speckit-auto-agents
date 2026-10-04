@@ -16,7 +16,8 @@ A small set of [Claude Code](https://claude.com/claude-code) subagent definition
     ├── developer.md        # implements tasks.md
     ├── verifier.md         # analyze + converge, never fixes
     ├── bug-fixer.md        # assess → fix → test a bug
-    └── idea-assessor.md    # intake → research → define → shape → decide
+    ├── idea-assessor.md    # intake → research → define → shape → decide
+    └── AGENTS.md           # shared rules: artifact layering, reply format, missing skills
 ```
 
 ## The agents
@@ -31,6 +32,12 @@ A small set of [Claude Code](https://claude.com/claude-code) subagent definition
 | `idea-assessor` | One stage per call, state kept in `.specify/assessments/<slug>/`. | `speckit-assess-intake`, `-research`, `-define`, `-shape`, `-decide` |
 
 Each agent has narrow permissions (tools, writable paths) and answers with a fixed `STATUS` block, so the coordinator reads little and its context stays small.
+
+Shared rules live in `AGENTS.md` (installed at the project root) instead of being repeated in every agent:
+
+- **Artifact layering.** constitution → spec → plan → tasks. Each file holds only what is new at its level and refers upstream by ID (`FR-003`, `constitution §Testing`) instead of restating it. `tasks.md` is the checklist only.
+- **Compact replies.** Agents answer with the `STATUS` block only: paths and IDs, no prose.
+- **Missing skills.** Agents never improvise a skill they don't own; they return `SKILL_REQUEST`.
 
 ## Workflows
 
@@ -125,7 +132,8 @@ Then start Claude Code in the project and talk to the `coordinator` (e.g. `claud
    - else `<project>/.agents/` exists → `.agents/agents/`
    - else it warns and asks whether to create `.claude/`. Answering anything but yes aborts with nothing copied.
 5. **Copy.** Existing files are skipped unless `-f`. Duplicates (an agent requested twice) are copied once.
-6. **Report.** Lists skipped files, copied files, and the destination.
+6. **Shared rules.** Creates `<project>/AGENTS.md`, or appends the rules to an existing one between `<!-- speckit-agents:start/end -->` markers. With `-f` only that block is refreshed; the rest of the file is kept.
+7. **Report.** Lists skipped files, copied files, and the destination.
 
 ## Customize
 

@@ -12,6 +12,11 @@ SDD_AGENTS=(coordinator.md planner.md developer.md verifier.md)
 BUG_FIXER_AGENTS=(bug-fixer.md)
 ASSESSOR_AGENTS=(idea-assessor.md)
 
+# Shared rules every agent follows; merged into <project>/AGENTS.md between these markers.
+SHARED_FILE="AGENTS.md"
+MARK_START="<!-- speckit-agents:start -->"
+MARK_END="<!-- speckit-agents:end -->"
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") [-d DIR] [-f] <agent>...
@@ -58,7 +63,7 @@ for agent in "$@"; do
     *)         die "unknown agent '$agent' (valid: sdd, bug-fixer, assessor)" ;;
   esac
 done
-for f in "${files[@]}"; do
+for f in "${files[@]}" "$SHARED_FILE"; do
   [ -f "$AGENTS_SRC_DIR/$f" ] || die "missing source file: $AGENTS_SRC_DIR/$f"
 done
 
@@ -97,4 +102,25 @@ if [ ${#copied[@]} -gt 0 ]; then
   printf '  %s\n' "${copied[@]}"
 else
   echo "Nothing to add: all requested agents are already in $dest"
+fi
+
+# Shared rules: create AGENTS.md, append our block to an existing one, or refresh the block with -f.
+shared_src="$AGENTS_SRC_DIR/$SHARED_FILE"
+shared_dest="$project_dir/$SHARED_FILE"
+block() { echo "$MARK_START"; cat "$shared_src"; echo "$MARK_END"; }
+if [ ! -e "$shared_dest" ]; then
+  block > "$shared_dest"
+  echo "Created $shared_dest"
+elif ! grep -qF "$MARK_START" "$shared_dest"; then
+  { echo; block; } >> "$shared_dest"
+  echo "Appended shared rules to $shared_dest"
+elif [ "$force" -eq 1 ]; then
+  tmp="$(mktemp)"
+  awk -v s="$MARK_START" -v e="$MARK_END" -v src="$shared_src" '
+    $0 == s { print; while ((getline l < src) > 0) print l; skip = 1; next }
+    $0 == e { skip = 0 }
+    !skip' "$shared_dest" > "$tmp" && mv "$tmp" "$shared_dest"
+  echo "Updated shared rules in $shared_dest"
+else
+  echo "Skipped $SHARED_FILE (shared rules already present, use -f to refresh)"
 fi
