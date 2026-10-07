@@ -51,17 +51,23 @@ El `coordinator` elige uno según tu solicitud.
 ### Ciclo SDD (nueva feature)
 
 ```
+Definir:
 planner: specify
    └─ [NEEDS CLARIFICATION]? → coordinator: aclara con el usuario
 planner: plan → tasks
+   └─ se detiene: revisas spec/plan/tasks y luego pides implementar
+
+Implementar (a petición):
 verifier: analyze      ── ¿CRITICAL? → de vuelta al planner
-developer: implement
+developer: fase 1      ── pausa: ejecutas /compact y luego "continue"
+developer: fase 2      ── pausa: /compact, "continue"
+...
 verifier: converge     ── Converged → listo
-                       └─ hallazgos de código → developer
+                       └─ hallazgos de código → developer (pausa) → converge
                        └─ hallazgos de spec/plan/tasks → planner → developer
 ```
 
-Se detiene tras 5 rondas implement→converge sin progreso y escala a ti.
+El ciclo se detiene cuando `tasks.md` está escrito, para que revises todos los artefactos antes de escribir código. La implementación ejecuta una fase de `tasks.md` por llamada al developer. Tras cada una, el coordinador hace una pausa y te pide ejecutar `/compact`: no puede ejecutar ese comando integrado por sí mismo. Luego reconstruye su estado desde las casillas de `tasks.md`, así nada depende de la conversación compactada. Se detiene tras 5 rondas de converge sin progreso y escala a ti.
 
 ### Ciclo de bugs
 

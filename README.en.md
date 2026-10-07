@@ -51,17 +51,23 @@ The `coordinator` picks one based on your request.
 ### SDD loop (new feature)
 
 ```
+Define:
 planner: specify
    └─ [NEEDS CLARIFICATION]? → coordinator: clarify with user
 planner: plan → tasks
+   └─ stop: you review spec/plan/tasks, then ask to implement
+
+Implement (on request):
 verifier: analyze      ── CRITICAL? → back to planner
-developer: implement
+developer: phase 1     ── pause: you run /compact, then "continue"
+developer: phase 2     ── pause: /compact, "continue"
+...
 verifier: converge     ── Converged → done
-                       └─ code findings → developer
+                       └─ code findings → developer (pause) → converge
                        └─ spec/plan/tasks findings → planner → developer
 ```
 
-Stops after 5 implement→converge rounds without progress and escalates to you.
+The loop stops once `tasks.md` is written so you can review every artifact before any code is written. Implementation runs one `tasks.md` phase per developer call. After each one the coordinator pauses and asks you to run `/compact`: it can't run that built-in command itself. It then rebuilds its state from the `tasks.md` checkboxes, so nothing depends on the compacted conversation. Stops after 5 converge rounds without progress and escalates to you.
 
 ### Bug loop
 
