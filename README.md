@@ -59,15 +59,15 @@ planner: plan → tasks
 
 Implementar (a petición):
 verifier: analyze      ── ¿CRITICAL? → de vuelta al planner
-developer: fase 1      ── pausa: ejecutas /compact y luego "continue"
-developer: fase 2      ── pausa: /compact, "continue"
+developer: fase 1      ── una llamada por fase, sin pausa
+developer: fase 2
 ...
 verifier: converge     ── Converged → listo
                        └─ hallazgos de código → developer (pausa) → converge
                        └─ hallazgos de spec/plan/tasks → planner → developer
 ```
 
-El ciclo se detiene cuando `tasks.md` está escrito, para que revises todos los artefactos antes de escribir código. La implementación ejecuta una fase de `tasks.md` por llamada al developer. Tras cada una, el coordinador hace una pausa y te pide ejecutar `/compact`: no puede ejecutar ese comando integrado por sí mismo. Luego reconstruye su estado desde las casillas de `tasks.md`, así nada depende de la conversación compactada. Se detiene tras 5 rondas de converge sin progreso y escala a ti.
+El ciclo se detiene cuando `tasks.md` está escrito, para que revises todos los artefactos antes de escribir código. La implementación ejecuta una fase de `tasks.md` por llamada al developer, una tras otra y sin pausas. Cada llamada al developer tiene su propio contexto limpio, así el coordinador solo acumula los bloques `STATUS` cortos. Antes de cada fase reconstruye su estado desde las casillas de `tasks.md`, así la compactación automática puede ocurrir en cualquier momento sin perder nada. Para compactar antes, baja el umbral en el `.claude/settings.json` de tu proyecto: `{ "env": { "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50" } }`. Se detiene tras 5 rondas de converge sin progreso y escala a ti.
 
 ### Ciclo de bugs
 

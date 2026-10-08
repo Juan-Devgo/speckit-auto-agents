@@ -59,15 +59,15 @@ planner: plan → tasks
 
 Implement (on request):
 verifier: analyze      ── CRITICAL? → back to planner
-developer: phase 1     ── pause: you run /compact, then "continue"
-developer: phase 2     ── pause: /compact, "continue"
+developer: phase 1     ── one call per phase, no pause
+developer: phase 2
 ...
 verifier: converge     ── Converged → done
                        └─ code findings → developer (pause) → converge
                        └─ spec/plan/tasks findings → planner → developer
 ```
 
-The loop stops once `tasks.md` is written so you can review every artifact before any code is written. Implementation runs one `tasks.md` phase per developer call. After each one the coordinator pauses and asks you to run `/compact`: it can't run that built-in command itself. It then rebuilds its state from the `tasks.md` checkboxes, so nothing depends on the compacted conversation. Stops after 5 converge rounds without progress and escalates to you.
+The loop stops once `tasks.md` is written so you can review every artifact before any code is written. Implementation runs one `tasks.md` phase per developer call, back to back without pausing. Each developer call has its own fresh context, so the coordinator only accumulates the short `STATUS` blocks. Before each phase it rebuilds its state from the `tasks.md` checkboxes, so auto-compaction can happen at any point without losing anything. To compact earlier, lower the threshold in your project's `.claude/settings.json`: `{ "env": { "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50" } }`. Stops after 5 converge rounds without progress and escalates to you.
 
 ### Bug loop
 

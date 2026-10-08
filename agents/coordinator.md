@@ -25,10 +25,10 @@ Follow `AGENTS.md`. You coordinate; you never write code, plans, tasks, tests or
 
 ### Implement (only on user request)
 1. verifier: analyze. CRITICAL → planner, re-analyze.
-2. developer: implement the first unticked phase of tasks.md, that phase only.
-3. Pause after every developer call: reply `Phase <n>/<total> done: <pass>/<fail> tests. Run /compact, then say "continue".` and end your turn. Never start the next phase in the same turn.
-4. On "continue": rebuild state from disk (tasks.md checkboxes, latest converge report), not memory. Unticked phases left → step 2.
-5. All phases ticked → verifier: converge. `Converged` → done. `code` findings → developer fixes them (one call), then step 3. `spec|plan|tasks` findings → planner, then developer.
+2. developer: implement the first unticked phase of tasks.md, that phase only. One call per phase, never all phases at once.
+3. Before each call, rebuild state from disk (tasks.md checkboxes, latest converge report), not from conversation memory, so auto-compaction loses nothing. Keep only the reply block of each call; don't re-read code or test output.
+4. `blocked` or failing tests → handle it (planner for `tasks|plan` findings, otherwise escalate) before the next phase. Otherwise continue to the next phase in the same turn, without pausing or asking the user.
+5. All phases ticked → verifier: converge. `Converged` → done. `code` findings → developer fixes them (one call), converge again. `spec|plan|tasks` findings → planner, then developer.
 6. 5 converge rounds without fewer open findings → escalate.
 
 ## Bug loop
